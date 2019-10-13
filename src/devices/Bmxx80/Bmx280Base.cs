@@ -35,6 +35,7 @@ namespace Iot.Device.Bmxx80
         /// </summary>
         protected static readonly int[] s_osToMeasCycles = { 0, 7, 9, 14, 23, 44 };
 
+        private Bmx280OperationMode _operationMode;
         private Bmx280FilteringMode _filteringMode;
         private StandbyTime _standbyTime;
 
@@ -45,6 +46,19 @@ namespace Iot.Device.Bmxx80
         /// <param name="i2cDevice">The <see cref="I2cDevice"/> to create with.</param>
         protected Bmx280Base(byte deviceId, I2cDevice i2cDevice)
             : base(deviceId, i2cDevice) { }
+
+        /// <summary>
+        /// Operation mode the sensor is operating in.
+        /// </summary>
+        public Bmx280OperationMode OperationMode
+        {
+            get => _operationMode;
+            set
+            {
+                _operationMode = value;
+            }
+        }
+
 
         /// <summary>
         /// Gets or sets the IIR filter mode.

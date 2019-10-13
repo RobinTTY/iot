@@ -12,6 +12,7 @@ using Iot.Device.Bmxx80.PowerMode;
 using Iot.Device.Bmxx80.Register;
 using Iot.Units;
 
+// TODO: after reset check initial value
 namespace Iot.Device.Bmxx80
 {
     /// <summary>
