@@ -55,6 +55,18 @@ namespace Iot.Device.Bmxx80
             get => _operationMode;
             set
             {
+                switch (value)
+                {
+                    case Bmx280OperationMode.Continuous:
+                        SetPowerMode(Bmx280PowerMode.Normal);
+                        break;
+                    case Bmx280OperationMode.Manual:
+                        // Set to sleep, sensor will enter forced mode when Read() is called
+                        SetPowerMode(Bmx280PowerMode.Sleep);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(value), value, null);
+                }
                 _operationMode = value;
             }
         }
@@ -226,7 +238,7 @@ namespace Iot.Device.Bmxx80
         /// Sets the power mode to the given mode
         /// </summary>
         /// <param name="powerMode">The <see cref="Bmx280PowerMode"/> to set.</param>
-        public void SetPowerMode(Bmx280PowerMode powerMode)
+        protected void SetPowerMode(Bmx280PowerMode powerMode)
         {
             byte read = Read8BitsFromRegister(_controlRegister);
 

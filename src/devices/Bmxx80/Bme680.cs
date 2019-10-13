@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Device.I2c;
 using System.Linq;
+using System.Threading.Tasks;
+using Bmxx80.ReadResult;
 using Iot.Device.Bmxx80.CalibrationData;
 using Iot.Device.Bmxx80.FilteringMode;
 using Iot.Device.Bmxx80.PowerMode;
@@ -302,6 +304,33 @@ namespace Iot.Device.Bmxx80
         }
 
         /// <summary>
+        /// Reads the measurement results after performing a single measurement.
+        /// </summary>
+        /// <returns><see cref="Bme280ReadResult"/> containing the measured values.</returns>
+        public Bme680ReadResult Read()
+        {
+            var measurementDuration = GetMeasurementDuration(_heaterProfile);
+            SetPowerMode(Bme680PowerMode.Forced);
+            Task.Delay(measurementDuration).Wait();
+
+            return ReadResultRegisters();
+        }
+
+        /// <summary>
+        /// Asynchronously reads the measurement results after performing single a measurement.
+        /// </summary>
+        /// <returns><see cref="Bmp280ReadResult"/> containing the measured values.</returns>
+        public async Task<Bme680ReadResult> ReadAsync()
+        {
+
+            var measurementDuration = GetMeasurementDuration(_heaterProfile);
+            SetPowerMode(Bme680PowerMode.Forced);
+            await Task.Delay(measurementDuration);
+
+            return ReadResultRegisters();
+        }
+
+        /// <summary>
         /// Reads the humidity. A return value indicates whether the reading succeeded.
         /// </summary>
         /// <param name="humidity">
@@ -340,7 +369,7 @@ namespace Iot.Device.Bmxx80
                 pressure = double.NaN;
                 return false;
             }
-                
+
 
             // Read pressure data.
             var press = (int)Read24BitsFromRegister((byte)Bme680Register.PRESSUREDATA, Endianness.BigEndian);
@@ -367,7 +396,7 @@ namespace Iot.Device.Bmxx80
                 temperature = Temperature.FromCelsius(double.NaN);
                 return false;
             }
-                
+
 
             var temp = (int)Read24BitsFromRegister((byte)Bme680Register.TEMPDATA, Endianness.BigEndian);
 
@@ -394,7 +423,7 @@ namespace Iot.Device.Bmxx80
             // Read 10 bit gas resistance value from registers
             var gasResRaw = Read8BitsFromRegister((byte)Bme680Register.GAS_RES);
             var gasRange = Read8BitsFromRegister((byte)Bme680Register.GAS_RANGE);
-            
+
             var gasRes = (ushort)((ushort)(gasResRaw << 2) + (byte)(gasRange >> 6));
             gasRange &= (byte)Bme680Mask.GAS_RANGE;
 
@@ -418,6 +447,21 @@ namespace Iot.Device.Bmxx80
 
             HeaterIsEnabled = true;
             GasConversionIsEnabled = true;
+        }
+
+        private Bme680ReadResult ReadResultRegisters()
+        {
+            TryReadTemperature(out var temp);
+            TryReadPressure(out var press);
+            TryReadHumidity(out var hum);
+            TryReadGasResistance(out var gasResistance);
+            return new Bme680ReadResult
+            {
+                Temperature = temp,
+                Pressure = press,
+                Humidity = hum,
+                GasResistance = gasResistance
+            };
         }
 
         /// <summary>

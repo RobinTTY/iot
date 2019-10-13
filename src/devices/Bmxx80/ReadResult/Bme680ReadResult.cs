@@ -12,8 +12,23 @@ namespace Bmxx80.ReadResult
     public struct Bme680ReadResult
     {
         /// <summary>
+        /// Collected temperature measurement.
+        /// </summary>
+        public Temperature Temperature;
+
+        /// <summary>
+        /// Collected pressure measurement.
+        /// </summary>
+        public double Pressure;
+
+        /// <summary>
+        /// Collected humidity measurement.
+        /// </summary>
+        public double Humidity;
+
+        /// <summary>
         /// Collected gas resistance measurement.
         /// </summary>
-        public double GasResistance { get; }
+        public double GasResistance;
     }
 }

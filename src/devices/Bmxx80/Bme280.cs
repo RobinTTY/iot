@@ -4,7 +4,10 @@
 
 using System;
 using System.Device.I2c;
+using System.Threading.Tasks;
+using Bmxx80.ReadResult;
 using Iot.Device.Bmxx80.CalibrationData;
+using Iot.Device.Bmxx80.PowerMode;
 using Iot.Device.Bmxx80.Register;
 
 namespace Iot.Device.Bmxx80
@@ -22,7 +25,7 @@ namespace Iot.Device.Bmxx80
         /// <summary>
         /// Calibration data for the <see cref="Bme680"/>.
         /// </summary>
-        private Bme280CalibrationData _bme280Calibration;
+        private readonly Bme280CalibrationData _bme280Calibration;
 
         private Sampling _humiditySampling;
 
@@ -66,6 +69,38 @@ namespace Iot.Device.Bmxx80
         }
 
         /// <summary>
+        /// Reads the measurement results. In manual mode a single measurement will be performed before reading.
+        /// </summary>
+        /// <returns><see cref="Bme280ReadResult"/> containing the measured values.</returns>
+        public Bme280ReadResult Read()
+        {
+            if (OperationMode == Bmx280OperationMode.Manual)
+            {
+                var measurementDuration = GetMeasurementDuration();
+                SetPowerMode(Bmx280PowerMode.Forced);
+                Task.Delay(measurementDuration).Wait();
+            }
+
+            return ReadResultRegisters();
+        }
+
+        /// <summary>
+        /// Asynchronously reads the measurement results. In manual mode a single measurement will be performed before reading.
+        /// </summary>
+        /// <returns><see cref="Bmp280ReadResult"/> containing the measured values.</returns>
+        public async Task<Bme280ReadResult> ReadAsync()
+        {
+            if (OperationMode == Bmx280OperationMode.Manual)
+            {
+                var measurementDuration = GetMeasurementDuration();
+                SetPowerMode(Bmx280PowerMode.Forced);
+                await Task.Delay(measurementDuration);
+            }
+
+            return ReadResultRegisters();
+        }
+
+        /// <summary>
         /// Reads the humidity. A return value indicates whether the reading succeeded.
         /// </summary>
         /// <param name="humidity">
@@ -106,6 +141,19 @@ namespace Iot.Device.Bmxx80
         {
             base.SetDefaultConfiguration();
             HumiditySampling = Sampling.UltraLowPower;
+        }
+
+        private Bme280ReadResult ReadResultRegisters()
+        {
+            TryReadTemperature(out var temp);
+            TryReadPressure(out var press);
+            TryReadHumidity(out var hum);
+            return new Bme280ReadResult
+            {
+                Temperature = temp,
+                Pressure = press,
+                Humidity = hum
+            };
         }
 
         /// <summary>

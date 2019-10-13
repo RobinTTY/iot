@@ -14,10 +14,11 @@ namespace Bmxx80.ReadResult
         /// <summary>
         /// Collected temperature measurement.
         /// </summary>
-        public Temperature Temperature { get; }
+        public Temperature Temperature;
+
         /// <summary>
         /// Collected pressure measurement.
         /// </summary>
-        public double Pressure { get; }
+        public double Pressure;
     }
 }
