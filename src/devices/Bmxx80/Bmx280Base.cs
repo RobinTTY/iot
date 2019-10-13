@@ -109,108 +109,30 @@ namespace Iot.Device.Bmxx80
         }
 
         /// <summary>
-        /// Reads the temperature. A return value indicates whether the reading succeeded.
+        /// Reads the temperature from register.
         /// </summary>
-        /// <param name="temperature">
-        /// Contains the measured temperature if the <see cref="Bmxx80Base.TemperatureSampling"/> was not set to <see cref="Sampling.Skipped"/>.
-        /// Contains <see cref="double.NaN"/> otherwise.
-        /// </param>
-        /// <returns><code>true</code> if measurement was not skipped, otherwise <code>false</code>.</returns>
-        public override bool TryReadTemperature(out Temperature temperature)
+        /// <returns>The measured <see cref="Temperature"/>.</returns>
+        protected override Temperature ReadTemperatureRegister()
         {
             if (TemperatureSampling == Sampling.Skipped)
-            {
-                temperature = Temperature.FromCelsius(double.NaN);
-                return false;
-            }
+                return Temperature.FromCelsius(double.NaN);
 
             var temp = (int)Read24BitsFromRegister((byte)Bmx280Register.TEMPDATA_MSB, Endianness.BigEndian);
-
-            temperature = CompensateTemperature(temp >> 4);
-            return true;
+            return CompensateTemperature(temp >> 4);
         }
 
         /// <summary>
-        /// Read the <see cref="Bmx280PowerMode"/> state.
+        /// Reads the pressure from register.
         /// </summary>
-        /// <returns>The current <see cref="Bmx280PowerMode"/>.</returns>
-        /// <exception cref="NotImplementedException">Thrown when the power mode does not match a defined mode in <see cref="Bmx280PowerMode"/>.</exception>
-        public Bmx280PowerMode ReadPowerMode()
-        {
-            byte read = Read8BitsFromRegister(_controlRegister);
-
-            // Get only the power mode bits.
-            var powerMode = (byte)(read & 0b_0000_0011);
-
-            if (Enum.IsDefined(typeof(Bmx280PowerMode), powerMode) == false)
-            {
-                throw new IOException("Read unexpected power mode");
-            }
-
-            return powerMode switch
-            {
-                0b00 => Bmx280PowerMode.Sleep,
-                0b10 => Bmx280PowerMode.Forced,
-                0b11 => Bmx280PowerMode.Normal,
-                _ => throw new NotImplementedException($"Read power mode not defined by specification.")
-            };
-        }
-
-        /// <summary>
-        /// Reads the pressure. A return value indicates whether the reading succeeded.
-        /// </summary>
-        /// <param name="pressure">
-        /// Contains the measured pressure in Pa if the <see cref="Bmxx80Base.PressureSampling"/> was not set to <see cref="Sampling.Skipped"/>.
-        /// Contains <see cref="double.NaN"/> otherwise.
-        /// </param>
-        /// <returns><code>true</code> if measurement was not skipped, otherwise <code>false</code>.</returns>
-        public override bool TryReadPressure(out double pressure)
+        /// <returns>The measured pressure.</returns>
+        protected override double ReadPressureRegister()
         {
             if (PressureSampling == Sampling.Skipped)
-            {
-                pressure = double.NaN;
-                return false;
-            }
+                return double.NaN;
 
-            // Read the temperature first to load the t_fine value for compensation.
-            TryReadTemperature(out _);
-
-            // Read pressure data.
             var press = (int)Read24BitsFromRegister((byte)Bmx280Register.PRESSUREDATA, Endianness.BigEndian);
-
-            //Convert the raw value to the pressure in Pa.
             long pressPa = CompensatePressure(press >> 4);
-
-            //Return the temperature as a float value.
-            pressure = (double)pressPa / 256;
-            return true;
-        }
-
-        /// <summary>
-        /// Calculates the altitude in meters from the specified sea-level pressure(in hPa).
-        /// </summary>
-        /// <param name="seaLevelPressure">Sea-level pressure in hPa.</param>
-        /// <param name="altitude">
-        /// Contains the calculated metres above sea-level if the <see cref="Bmxx80Base.PressureSampling"/> was not set to <see cref="Sampling.Skipped"/>.
-        /// Contains <see cref="double.NaN"/> otherwise.
-        /// </param>
-        /// <returns><code>true</code> if pressure measurement was not skipped, otherwise <code>false</code>.</returns>
-        public bool TryReadAltitude(double seaLevelPressure, out double altitude)
-        {
-            // Read the pressure first.
-            var success = TryReadPressure(out var pressure);
-            if (!success)
-            {
-                altitude = double.NaN;
-                return false;
-            }
-
-            // Convert the pressure to Hectopascals (hPa).
-            pressure /= 100;
-
-            // Calculate and return the altitude using the international barometric formula.
-            altitude = 44330.0 * (1.0 - Math.Pow(pressure / seaLevelPressure, 0.1903));
-            return true;
+            return (double)pressPa / 256;
         }
 
         /// <summary>

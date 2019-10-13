@@ -63,8 +63,8 @@ namespace Iot.Device.Bmxx80
 
         private Bmp280ReadResult ReadResultRegisters()
         {
-            TryReadTemperature(out var temp);
-            TryReadPressure(out var press);
+            var temp = ReadTemperatureRegister();
+            var press = ReadPressureRegister();
             return new Bmp280ReadResult
             {
                 Temperature = temp,

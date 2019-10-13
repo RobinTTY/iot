@@ -56,13 +56,13 @@ namespace Iot.Device.Bmxx80
                 status = (byte)(status & 0b_1111_1000);
                 status = (byte)(status | (byte)value);
 
-                Span<byte> command = stackalloc[] {(byte)Bme280Register.CTRL_HUM, status};
+                Span<byte> command = stackalloc[] { (byte)Bme280Register.CTRL_HUM, status };
                 _i2cDevice.Write(command);
 
                 // Changes to the above register only become effective after a write operation to "CTRL_MEAS".
                 byte measureState = Read8BitsFromRegister((byte)Bmx280Register.CTRL_MEAS);
 
-                command = stackalloc[] {(byte)Bmx280Register.CTRL_MEAS, measureState};
+                command = stackalloc[] { (byte)Bmx280Register.CTRL_MEAS, measureState };
                 _i2cDevice.Write(command);
                 _humiditySampling = value;
             }
@@ -101,28 +101,16 @@ namespace Iot.Device.Bmxx80
         }
 
         /// <summary>
-        /// Reads the humidity. A return value indicates whether the reading succeeded.
+        /// Reads the humidity from register.
         /// </summary>
-        /// <param name="humidity">
-        /// Contains the measured humidity as %rH if the <see cref="HumiditySampling"/> was not set to <see cref="Sampling.Skipped"/>.
-        /// Contains <see cref="double.NaN"/> otherwise.
-        /// </param>
-        /// <returns><code>true</code> if measurement was not skipped, otherwise <code>false</code>.</returns>
-        public bool TryReadHumidity(out double humidity)
+        /// <returns>The measured humidity.</returns>
+        private double ReadHumidityRegister()
         {
             if (HumiditySampling == Sampling.Skipped)
-            {
-                humidity = double.NaN;
-                return false;
-            }
-
-            // Read the temperature first to load the t_fine value for compensation.
-            TryReadTemperature(out _);
+                return double.NaN;
 
             var hum = Read16BitsFromRegister((byte)Bme280Register.HUMIDDATA, Endianness.BigEndian);
-
-            humidity = CompensateHumidity(hum);
-            return true;
+            return CompensateHumidity(hum);
         }
 
         /// <summary>
@@ -145,9 +133,9 @@ namespace Iot.Device.Bmxx80
 
         private Bme280ReadResult ReadResultRegisters()
         {
-            TryReadTemperature(out var temp);
-            TryReadPressure(out var press);
-            TryReadHumidity(out var hum);
+            var temp = ReadTemperatureRegister();
+            var press = ReadPressureRegister();
+            var hum = ReadHumidityRegister();
             return new Bme280ReadResult
             {
                 Temperature = temp,

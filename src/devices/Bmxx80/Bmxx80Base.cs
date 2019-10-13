@@ -135,24 +135,16 @@ namespace Iot.Device.Bmxx80
         }
 
         /// <summary>
-        /// Reads the temperature. A return value indicates whether the reading succeeded.
+        /// Reads the temperature from register.
         /// </summary>
-        /// <param name="temperature">
-        /// Contains the measured temperature if the <see cref="TemperatureSampling"/> was not set to <see cref="Sampling.Skipped"/>.
-        /// Contains <see cref="double.NaN"/> otherwise.
-        /// </param>
-        /// <returns><code>true</code> if measurement was not skipped, otherwise <code>false</code>.</returns>
-        public abstract bool TryReadTemperature(out Temperature temperature);
+        /// <returns>The measured <see cref="Temperature"/>.</returns>
+        protected abstract Temperature ReadTemperatureRegister();
 
         /// <summary>
-        /// Reads the pressure. A return value indicates whether the reading succeeded.
+        /// Reads the pressure from register.
         /// </summary>
-        /// <param name="pressure">
-        /// Contains the measured pressure in Pa if the <see cref="PressureSampling"/> was not set to <see cref="Sampling.Skipped"/>.
-        /// Contains <see cref="double.NaN"/> otherwise.
-        /// </param>
-        /// <returns><code>true</code> if measurement was not skipped, otherwise <code>false</code>.</returns>
-        public abstract bool TryReadPressure(out double pressure);
+        /// <returns>The measured pressure.</returns>
+        protected abstract double ReadPressureRegister();
 
         /// <summary>
         /// Compensates the temperature.
